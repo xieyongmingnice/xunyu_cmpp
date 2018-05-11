@@ -1,9 +1,7 @@
 package com.xunyu.cmpp.handler;
 
-import com.xunyu.cmpp.factory.MarshallingCodecFactory;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
-import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.Timeout;
 import io.netty.util.Timer;
 import io.netty.util.TimerTask;
@@ -18,7 +16,7 @@ import java.util.concurrent.TimeUnit;
  * @date 2018/4/19 11:17
  */
 @ChannelHandler.Sharable
-public abstract class CmppClientConnectManager extends ChannelHandlerAdapter implements TimerTask,ChannelHandlerHolder{
+public abstract class CmppClientConnectManager extends ChannelInboundHandlerAdapter implements TimerTask,ChannelHandlerHolder{
 
     private Logger logger = LoggerFactory.getLogger(CmppClientConnectManager.class);
 

@@ -24,7 +24,7 @@ public class CmppClient {
         //TODO host port从配置中取
         String host = "localhost";
         int port = 8990;
-        CmppClient cmppClient = CilentInstanceGetter.instance;
+        CmppClient cmppClient = new CmppClient();
         cmppClient.doConnect(host,port);
     }
     /**
@@ -79,9 +79,6 @@ public class CmppClient {
 
     }
 
-    private static class CilentInstanceGetter{
-        private static CmppClient instance = new CmppClient();
-    }
 
 
 }

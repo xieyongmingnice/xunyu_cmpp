@@ -12,6 +12,7 @@ import com.xunyu.cmpp.packet.connect.CmppConnectResponse;
 import com.xunyu.cmpp.utils.CachedMillisecondClock;
 import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.util.ReferenceCountUtil;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang.time.DateFormatUtils;
@@ -24,7 +25,7 @@ import org.slf4j.LoggerFactory;
  * @description 客户端handler
  * @date 2018/4/18 14:09
  */
-public class CmppClientChannelHandler extends ChannelHandlerAdapter {
+public class CmppClientChannelHandler extends ChannelInboundHandlerAdapter {
 
     private Logger logger = LoggerFactory.getLogger(CmppClientChannelHandler.class);
 
@@ -38,6 +39,7 @@ public class CmppClientChannelHandler extends ChannelHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        logger.info("receive server cmppConnectResponseMassage");
         /**
          * 第一次接收应该接到的是 请求连接的response消息
          */
@@ -82,5 +84,6 @@ public class CmppClientChannelHandler extends ChannelHandlerAdapter {
         msg.setTimestamp(Long.parseLong(timestamp));
         msg.setVersion((short) 0X30);
         ctx.channel().writeAndFlush(msg);
+        logger.info("send CmppRequestConnectMessage");
     }
 }

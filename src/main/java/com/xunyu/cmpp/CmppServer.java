@@ -1,12 +1,15 @@
 package com.xunyu.cmpp;
 
+import com.xunyu.cmpp.codec.CmppHeaderCodec;
 import com.xunyu.cmpp.factory.MarshallingCodecFactory;
 import com.xunyu.cmpp.handler.CmppCodecChannelInitializer;
+import com.xunyu.cmpp.handler.CmppServerChannelHandler;
 import com.xunyu.cmpp.handler.CmppServerIdleStateHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.timeout.IdleStateHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,7 +61,13 @@ public class CmppServer {
                      ch.pipeline().addLast(new IdleStateHandler(5, 0, 0, TimeUnit.SECONDS))
                                  .addLast(MarshallingCodecFactory.buildMarshallingDecoder())
                                  .addLast(MarshallingCodecFactory.buildMarshallingEncoder())
-                                 .addLast(initPipeline());
+                                 /*
+                                  * 消息总长度(含消息头及消息体) 最大消息长度要从配置里取 处理粘包，断包 TODO 从配置中取最大消息长度
+                                  */
+                                .addLast(  new LengthFieldBasedFrameDecoder(4 * 1024 , 0, 4, -4, 0, true))
+                                 //消息头编解码器
+                                 .addLast(  new CmppHeaderCodec())
+                                 .addLast(  CmppServerChannelHandler.getInstance());
                  }
              });
             /**

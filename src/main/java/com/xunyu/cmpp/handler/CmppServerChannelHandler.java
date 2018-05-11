@@ -5,6 +5,7 @@ import com.xunyu.cmpp.packet.Message;
 import com.xunyu.cmpp.packet.PacketType;
 import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.MessageToMessageCodec;
 import org.slf4j.Logger;
@@ -17,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @description 服务端handler
  * @date 2018/4/18 14:40
  */
-public class CmppServerChannelHandler extends ChannelHandlerAdapter {
+public class CmppServerChannelHandler extends ChannelInboundHandlerAdapter {
 
     private Logger logger = LoggerFactory.getLogger(CmppServerChannelHandler.class);
 
@@ -38,25 +39,14 @@ public class CmppServerChannelHandler extends ChannelHandlerAdapter {
     }
 
     @Override
-    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         /**
          * 第一次接收到的信息应该是客户端传来的连接请求
          */
-        logger.info("有客户端连接+{}",ctx.channel().remoteAddress());
-    }
-
-    @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        logger.info("read cmppConnectRequestMessage");
         long commandId = ((Message)msg).getHeader().getCommandId();
         MessageToMessageCodec codec = codecMap.get(commandId);
         codec.channelRead(ctx,msg);
-    }
-
-    @Override
-    public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-        long commandId = ((Message)msg).getHeader().getCommandId();
-        MessageToMessageCodec codec = codecMap.get(commandId);
-        codec.write(ctx, msg, promise);
     }
 
     @Override
