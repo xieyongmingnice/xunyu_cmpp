@@ -1,8 +1,10 @@
 package com.xunyu.cmpp;
 
+import com.xunyu.cmpp.codec.CmppHeaderCodec;
 import com.xunyu.cmpp.factory.MarshallingCodecFactory;
 import com.xunyu.cmpp.handler.CmppClientChannelHandler;
 import com.xunyu.cmpp.handler.CmppClientConnectManager;
+import com.xunyu.cmpp.handler.EncoderAndDecoderHandler;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -37,10 +39,12 @@ public class CmppClient {
      */
     private void doConnect(String host,int port){
         final HashedWheelTimer timer = new HashedWheelTimer();
-        EventLoopGroup eventLoopGroup = new NioEventLoopGroup();
+        EventLoopGroup group = new NioEventLoopGroup();
         try {
             Bootstrap b = new Bootstrap();
-            b.group(eventLoopGroup).channel(NioSocketChannel.class).option(ChannelOption.TCP_NODELAY, true);
+            b.group(group);
+            b.channel(NioSocketChannel.class);
+            b.option(ChannelOption.TCP_NODELAY, true);
             final CmppClientConnectManager manager = getManager(b,timer,port,host,true);
             b.handler(new ChannelInitializer<Channel>() {
                 @Override
@@ -66,8 +70,8 @@ public class CmppClient {
                 return new ChannelHandler[]{
                         this,
                         new IdleStateHandler(0, 0, 5, TimeUnit.SECONDS),
-                        MarshallingCodecFactory.buildMarshallingEncoder(),
-                        MarshallingCodecFactory.buildMarshallingDecoder(),
+                        new CmppHeaderCodec(),
+                        new EncoderAndDecoderHandler(),
                         new CmppClientChannelHandler()
                 };
             }

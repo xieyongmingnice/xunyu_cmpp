@@ -2,9 +2,8 @@ package com.xunyu.cmpp;
 
 import com.xunyu.cmpp.codec.CmppHeaderCodec;
 import com.xunyu.cmpp.factory.MarshallingCodecFactory;
-import com.xunyu.cmpp.handler.CmppCodecChannelInitializer;
 import com.xunyu.cmpp.handler.CmppServerChannelHandler;
-import com.xunyu.cmpp.handler.CmppServerIdleStateHandler;
+import com.xunyu.cmpp.handler.EncoderAndDecoderHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -50,57 +49,43 @@ public class CmppServer {
 
         EventLoopGroup bossGroup = new NioEventLoopGroup();
         EventLoopGroup workerGroup = new NioEventLoopGroup();
+
         try {
             ServerBootstrap b = new ServerBootstrap();
-            b.group(bossGroup,workerGroup)
-             .channel(NioServerSocketChannel.class)
-             .option(ChannelOption.SO_BACKLOG,1024)
-             .childHandler(new ChannelInitializer<Channel>() {
-                 @Override
-                 protected void initChannel(Channel ch) throws Exception {
-                     ch.pipeline().addLast(new IdleStateHandler(5, 0, 0, TimeUnit.SECONDS))
-                                 .addLast(MarshallingCodecFactory.buildMarshallingDecoder())
-                                 .addLast(MarshallingCodecFactory.buildMarshallingEncoder())
-                                 /*
-                                  * 消息总长度(含消息头及消息体) 最大消息长度要从配置里取 处理粘包，断包 TODO 从配置中取最大消息长度
-                                  */
-                                .addLast(  new LengthFieldBasedFrameDecoder(4 * 1024 , 0, 4, -4, 0, true))
-                                 //消息头编解码器
-                                 .addLast(  new CmppHeaderCodec())
-                                 .addLast(  CmppServerChannelHandler.getInstance());
-                 }
-             });
-            /**
-             * 绑定端口、同步等待
-             */
+            b.group(bossGroup, workerGroup)
+                    .channel(NioServerSocketChannel.class)
+                    .option(ChannelOption.SO_BACKLOG, 1024)
+                    .childHandler(new ChannelInitializer<Channel>() {
+
+                        @Override
+                        protected void initChannel(Channel ch) throws Exception {
+                            /*
+                             * 消息总长度(含消息头及消息体) 最大消息长度要从配置里取 处理粘包，断包 TODO 从配置中取最大消息长度
+                             */
+//                            ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(4 * 1024 , 0, 4, -4, 0, true));
+
+                            ch.pipeline().addLast(new IdleStateHandler(5, 0, 0, TimeUnit.SECONDS));
+                            //消息头编解码器
+                            ch.pipeline().addLast(new CmppHeaderCodec());
+                            ch.pipeline().addLast(new EncoderAndDecoderHandler());
+                            ch.pipeline().addLast(new CmppServerChannelHandler());
+                        }
+
+
+                    });
+            //绑定端口、同步等待
             ChannelFuture future = b.bind(port).sync();
             logger.info("启动监听，等待连接：{}，监听端口号：{}",future.isSuccess(),port);
-            /**
-             * 等待服务监听端口关闭
-             */
+
+            //等待服务监听端口关闭
             future.channel().closeFuture().sync();
-        }catch (Exception e){
-            logger.error(e.getMessage());
-        }finally{
-            /**
-             * 关闭
-             */
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
             bossGroup.shutdownGracefully();
             workerGroup.shutdownGracefully();
         }
-    }
 
-    /**
-     * @description  初始化pipeline
-     */
-    private ChannelInitializer<Channel> initPipeline(){
-        return new ChannelInitializer<Channel>() {
-            @Override
-            protected void initChannel(Channel channel) throws Exception {
-                ChannelPipeline pipeline = channel.pipeline();
-                pipeline.addLast(CmppCodecChannelInitializer.pipeName(),new CmppCodecChannelInitializer());
-//                pipeline.addLast(new CmppServerIdleStateHandler());
-            }
-        };
     }
 }

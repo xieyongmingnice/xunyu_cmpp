@@ -83,7 +83,7 @@ public class CmppClientChannelHandler extends ChannelInboundHandlerAdapter {
         msg.setSourceAddr(userName);
         msg.setTimestamp(Long.parseLong(timestamp));
         msg.setVersion((short) 0X30);
-        ctx.channel().writeAndFlush(msg);
+        ctx.writeAndFlush(msg);
         logger.info("send CmppRequestConnectMessage");
     }
 }

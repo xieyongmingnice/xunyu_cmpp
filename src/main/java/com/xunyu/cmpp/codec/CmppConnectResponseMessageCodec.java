@@ -34,39 +34,11 @@ public class CmppConnectResponseMessageCodec extends MessageToMessageCodec<Messa
 
     @Override
     protected void decode(ChannelHandlerContext ctx, Message msg, List<Object> out) throws Exception {
-        long commandId = ((Long) msg.getHeader().getCommandId()).longValue();
-        if (commandId != packetType.getCommandId())
-        {
-            //不解析，交给下一个codec
-            out.add(msg);
-            return;
-        }
-        CmppConnectResponseMessage responseMessage = new CmppConnectResponseMessage(msg.getHeader());
-
-        ByteBuf bodyBuffer = Unpooled.wrappedBuffer(msg.getBodyBuffer());
-
-        responseMessage.setStatus(bodyBuffer.readUnsignedInt());
-        responseMessage.setAuthenticatorISMG(bodyBuffer.readBytes(CmppConnectResponse.AUTHENTICATOR_ISMG.getLength()).array());
-        responseMessage.setVersion(bodyBuffer.readUnsignedByte());
-
-        ReferenceCountUtil.release(bodyBuffer);
-        out.add(responseMessage);
 
     }
 
     @Override
     protected void encode(ChannelHandlerContext ctx, CmppConnectResponseMessage msg, List<Object> out) throws Exception {
-
-        ByteBuf bodyBuffer = Unpooled.buffer(CmppConnectResponse.AUTHENTICATOR_ISMG.getBodyLength());
-
-        bodyBuffer.writeInt((int) msg.getStatus());
-        bodyBuffer.writeBytes(msg.getAuthenticatorISMG());
-        bodyBuffer.writeByte(msg.getVersion());
-
-        msg.setBodyBuffer(bodyBuffer.array());
-        msg.getHeader().setBodyLength(msg.getBodyBuffer().length);
-        ReferenceCountUtil.release(bodyBuffer);
-        out.add(msg);
 
     }
 }

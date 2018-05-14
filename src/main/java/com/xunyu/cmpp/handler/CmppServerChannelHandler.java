@@ -1,8 +1,10 @@
 package com.xunyu.cmpp.handler;
 
+import com.xunyu.cmpp.message.CmppConnectRequestMessage;
 import com.xunyu.cmpp.packet.CmppPacketType;
 import com.xunyu.cmpp.packet.Message;
 import com.xunyu.cmpp.packet.PacketType;
+import com.xunyu.cmpp.packet.connect.CmppConnectRequest;
 import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -24,18 +26,10 @@ public class CmppServerChannelHandler extends ChannelInboundHandlerAdapter {
 
     private ConcurrentHashMap<Long, MessageToMessageCodec> codecMap = new ConcurrentHashMap<Long, MessageToMessageCodec>();
 
-    private CmppServerChannelHandler(){
+    public CmppServerChannelHandler(){
         for (PacketType packetType : CmppPacketType.values()) {
             codecMap.put(packetType.getCommandId(), packetType.getCodec());
         }
-    }
-
-    private static class CmppServerChannelHandlerHolder{
-        private final static CmppServerChannelHandler instance = new CmppServerChannelHandler();
-    }
-
-    public static CmppServerChannelHandler getInstance(){
-        return CmppServerChannelHandlerHolder.instance;
     }
 
     @Override
@@ -43,15 +37,13 @@ public class CmppServerChannelHandler extends ChannelInboundHandlerAdapter {
         /**
          * 第一次接收到的信息应该是客户端传来的连接请求
          */
-        logger.info("read cmppConnectRequestMessage");
-        long commandId = ((Message)msg).getHeader().getCommandId();
-        MessageToMessageCodec codec = codecMap.get(commandId);
-        codec.channelRead(ctx,msg);
+        logger.info("read cmppConnectRequestMessage :{}",((CmppConnectRequestMessage)msg).getSourceAddr());
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         logger.error("有异常出现，原因：{}",cause.getMessage());
+        cause.printStackTrace();
     }
 
     @Override
